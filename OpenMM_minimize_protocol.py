@@ -61,7 +61,7 @@ for Molecule in lof:
         BackboneAtoms = MDTrajTrajectoryObject.topology.select("backbone")
         LoopAtoms = len(args.loopIDs) * [None]
         for LoopIx in range (len(LoopAtoms)):
-            LoopAtoms[LoopIx] = MDTrajTrajectoryObject.topology.select("not " + args.loopIDs[LoopIx])   #Note: we use "not" because we want these to be mobile, not constrained
+            LoopAtoms[LoopIx] = MDTrajTrajectoryObject.topology.select("not ({})".format(args.loopIDs[LoopIx]))   #Note: we use "not" because we want these to be mobile, not constrained
 
     energy_PM = simulation.context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(simtk.unit.kilocalories_per_mole)
     print ("Energy before minimization is {}  Kcal/mole".format(energy_PM), end='\n\n')
