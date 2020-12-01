@@ -32,11 +32,10 @@ print(lof)
 for Molecule in lof:
     prmtop = AmberPrmtopFile(Molecule + ".prmtop")
     inpcrd = AmberInpcrdFile(Molecule + ".inpcrd")
-    args.preffix = str(Molecule).split("/")[-1] #This is for naming purposes.
 
 # Read into MDTraj as well
 
-    MDTrajTrajectoryObject = md.load(Molecule + ".inpcrd", top = Molecule + ".prmtop")
+    MDTrajTrajectoryObject = md.load(inpcrd, top = prmtop)
 
 # Thermodynamics
     T = 0*simtk.unit.kelvin
