@@ -35,7 +35,7 @@ for Molecule in lof:
 
 # Read into MDTraj as well
 
-    MDTrajTrajectoryObject = md.load(inpcrd, top = prmtop)
+    MDTrajTrajectoryObject = md.load(Molecule + ".inpcrd", top = Molecule + ".prmtop")
 
 # Thermodynamics
     T = 0*simtk.unit.kelvin
