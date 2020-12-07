@@ -15,12 +15,12 @@ import datetime
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--files", type=str, nargs='+', help="Roots of files you want to Min,Heat,Equi; needs to be formatted like files.prmtop and files.inpcrd")
-parser.add_argument("--loopIDs", type=str, nargs='+', help="What ResIDs are found in Loops. If not given, only global minimization wil be done. IF you want to run succesive minimization rounds on different sets of loops, add them in the order you want to minimize them. Must be MDTraj DSL language.")
+parser.add_argument("--FixedIDs", type=str, nargs='+', help="What atoms to keep constrained. If not given, only global minimization wil be done. IF you want to run succesive minimization rounds on different sets of loops, add them in the order you want to minimize them. Must be MDTraj DSL language.")
 parser.add_argument("--solvent", type=str, help="What kind of solvent to use? Possible arguments: explicit | implicit")
 args = parser.parse_args()
 
-if (args.loopIDs is None):
-    print ("Loop IDs not supplied. Global minimization will be done.")
+if (args.FixedIDs is None):
+    print ("Fixed IDs not supplied. Global minimization will be done.")
 
 #Generate the list of files, given that you want to run this script on files that have the same root
 lof = args.files
@@ -64,12 +64,12 @@ for Molecule in lof:
     if inpcrd.boxVectors is not None:
         simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)
 
-    if (args.loopIDs is not None):
+    if (args.FixedIDs is not None):
         ##We extract atom indices using mdtraj
         BackboneAtoms = MDTrajTrajectoryObject.topology.select("backbone")
-        LoopAtoms = len(args.loopIDs) * [None]
-        for LoopIx in range (len(LoopAtoms)):
-            LoopAtoms[LoopIx] = MDTrajTrajectoryObject.topology.select("not ({})".format(args.loopIDs[LoopIx]))   #Note: we use "not" because we want these to be mobile, not constrained
+        FixedAtoms = len(args.FixedIDs) * [None]
+        for FixIx in range (len(FixedAtoms)):
+            FixedAtoms[FixedIx] = MDTrajTrajectoryObject.topology.select("not ({})".format(args.FixedIDs[FixedIx]))   #Note: we use "not" because we want these to be mobile, not constrained
 
     energy_PM = simulation.context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(simtk.unit.kilocalories_per_mole)
     print ("Energy before minimization is {}  Kcal/mole".format(energy_PM), end='\n\n')
@@ -82,42 +82,21 @@ for Molecule in lof:
     for PartIx in range(system.getNumParticles()):
         ActualMasses.append(system.getParticleMass(PartIx).value_in_unit(simtk.unit.dalton))
 
-    if (args.loopIDs is not None):
+    if (args.FixedIDs is not None):
 
-# Minimization of sidechains
+# Minimization of all Fixed Domains given
 
-        for PartIx in BackboneAtoms:
-            system.setParticleMass(int(PartIx), 0)
-   
-        print("Minimizing {} sidechains…".format(Molecule))
-        simulation.minimizeEnergy()
-        print("Minimization of {} sidechains done.".format(Molecule), end='\n\n')
-
-        SaveState = simulation.context.getState(getPositions=True)
-        pdbWrite = pdbreporter.PDBReporter("{}_SC_min.pdb".format(Molecule), reportInterval=0)
-        pdbWrite.report(simulation, SaveState)
-
-    
-        energy_PM = simulation.context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(simtk.unit.kilocalories_per_mole)
-        print ("Energy after sidechain minimization is {} Kcal/mole".format(energy_PM))
-    
-        #Restore masses:
-        for PartIx in range(system.getNumParticles()):
-            system.setParticleMass(PartIx, ActualMasses[PartIx])
-
-# Minimization of all Loops given
-
-        for LoopIx in range(len(LoopAtoms)):
-            for PartIx in LoopAtoms[LoopIx]:
+        for FixedIx in range(len(FixedAtoms)):
+            for PartIx in FixedAtoms[FixedIx]:
                 system.setParticleMass(int(PartIx), 0)
     
-            print("Minimizing {} (Loop number {})…".format(Molecule, LoopIx))
+            print("Minimizing {} (Fixed number {})…".format(Molecule, FixedIx))
             simulation.minimizeEnergy()
             energy_PM = simulation.context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(simtk.unit.kilocalories_per_mole)
-            print ("Energy after loop #{} minimization is {} Kcal/mole".format(LoopIx,energy_PM))
+            print ("Energy after loop #{} minimization is {} Kcal/mole".format(FixedIx,energy_PM))
    
             SaveState = simulation.context.getState(getPositions=True)
-            pdbWrite = pdbreporter.PDBReporter("{}_Loop{}_min.pdb".format(Molecule,LoopIx), reportInterval=0)
+            pdbWrite = pdbreporter.PDBReporter("{}_FixedDomain{}_min.pdb".format(Molecule,FixedIx), reportInterval=0)
             pdbWrite.report(simulation, SaveState)
 
     
