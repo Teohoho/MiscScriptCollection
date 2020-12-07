@@ -4,8 +4,6 @@
 #The selections are done using atom indices, obtained using
 #MDTraj
 
-#TODO: add a flag for explicit solvent
-
 from simtk.openmm.app import *
 from simtk.openmm import *
 import simtk.unit
@@ -18,6 +16,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--files", type=str, nargs='+', help="Roots of files you want to Min,Heat,Equi; needs to be formatted like files.prmtop and files.inpcrd")
 parser.add_argument("--loopIDs", type=str, nargs='+', help="What ResIDs are found in Loops. If not given, only global minimization wil be done. IF you want to run succesive minimization rounds on different sets of loops, add them in the order you want to minimize them. Must be MDTraj DSL language.")
+parser.add_argument("--solvent", type=str, help="What kind of solvent to use? Possible arguments: explicit | implicit")
 args = parser.parse_args()
 
 if (args.loopIDs is None):
@@ -42,12 +41,22 @@ for Molecule in lof:
     p = 1*simtk.unit.bar
     timestep = 0.000*simtk.unit.picoseconds
 
-# Setup the system (Explicit Solvent)
-#    system = prmtop.createSystem(nonbondedMethod=PME, nonbondedCutoff=1*simtk.unit.nanometer, constraints=HBonds)
-#    system.addForce(MonteCarloBarostat(p, T))
+# Setup the system (Implicit solvent)
+    if (args.solvent == "implicit"):
+        system = prmtop.createSystem(implicitSolvent=OBC2, soluteDielectric=1.0, solventDielectric=80.0, nonbondedMethod=CutoffNonPeriodic, nonbondedCutoff=1.2*nanometer, constraints=HBonds, implicitSolventSaltConc=0.15*moles/liter)
 
-# Setup the system (Implicit Solvent)
-    system = prmtop.createSystem(implicitSolvent=OBC2, soluteDielectric=1.0, solventDielectric=80.0, nonbondedMethod=CutoffNonPeriodic, nonbondedCutoff=1.2*simtk.unit.nanometer, constraints=None, implicitSolventSaltConc=0.15*simtk.unit.moles/simtk.unit.liter) 
+#Setup the system (Explicit Solvent)
+
+    elif (args.solvent == "explicit"):
+        system = prmtop.createSystem(nonbondedMethod=PME, nonbondedCutoff=1*nanometer, constraints=HBonds)
+        system.addForce(MonteCarloBarostat(p, T))
+
+#in case the user selects an invalid solvent type
+
+    else:
+        print ("Solvent type not recognized. Please choose 'explicit' or 'implicit' and try again.")
+        sys.exit(0)
+
 
     integrator = LangevinIntegrator(T, 1/simtk.unit.picosecond, timestep)
     simulation = Simulation(prmtop.topology, system, integrator, platformProperties={'DisablePmeStream':'true'})
