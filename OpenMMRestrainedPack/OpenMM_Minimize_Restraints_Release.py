@@ -13,7 +13,13 @@ parser.add_argument("--LoadState", type=str, help="XML file from previous simula
 parser.add_argument("--RestrainedAtomsIn", type=str, help="A file containing the indices of the atoms to be restrained")
 parser.add_argument("--RestrainedCoMAtomsIn", type=str, help="A file containing the lists of atoms which make up the two groups that will have their Centers of Mass restrained")
 parser.add_argument("--Verbose", action="store_true", help="Print PDBs after every restrained minimization. If not used, only the positions obtained the final minimization will be saved.")
+parser.add_argument("--NoGlobal", action="store_true", help="After all restraint profiles have been minimized, DON'T do a global minimization")
 args = parser.parse_args()
+
+if (args.RestrainedAtomsIn is None) and (args.NoGlobal is True):
+	print ("No restraints have been supplied and NoGlobal option was used. Exitting…")
+	sys.exit()
+
 
 def GenerateCoMRestraint(Group1, Group2):
 
@@ -48,18 +54,18 @@ def GenerateCoMRestraint(Group1, Group2):
 
 	"""
 
-	CustomCoMForce = CustomCentroidBondForce(2, "(((abs(abs(distance(Group1, Group2)) - tol) + (abs(distance(Group1, Group2)) - tol))/2)^2) * k")
-	CustomCoMForce.addGlobalParameter("k", (100)*kilocalories_per_mole/nanometer**2)
-	CustomCoMForce.addGlobalParameter("tol", 2*nanometer)
+	CustomCoMForce = CustomCentroidBondForce(2, "(((abs(abs(distance(g1,g2)) - tol) + (abs(distance(g1,g2)) - tol))/2)^2) * k")
+	P1 = CustomCoMForce.addGlobalParameter("k", (100)*kilocalories_per_mole/nanometer**2)
+	P2 = CustomCoMForce.addGlobalParameter("tol", 2*nanometer)
 
-    CustomCoMForce.addGroup(Group1)
-    CustomCoMForce.addGroup(Group2)
+	G1 = CustomCoMForce.addGroup(Group1)
+	G2 = CustomCoMForce.addGroup(Group2)
     
-    CustomCoMForce.addBond(groups=[0,1])
+	CustomCoMForce.addBond((G1,G2))
 
-	print ("A new Center of Mass restraint was generated, containing {} atoms.".format(len(Group1) + len(Group2))
+	print ("A new Center of Mass restraint was generated, containing {} atoms.".format(len(Group1) + len(Group2)))
 
-	return CustomCoMFlatbottomForce
+	return CustomCoMForce 
 
 
 
@@ -107,7 +113,7 @@ def GenerateRestraint(Positions, Indices):
 
 	print ("A new restraint was generated, containing {} atoms.".format(len(Indices)))
 
-	return GeneratedRestraint
+	return CustomHarmonicForce 
 
 
 
@@ -121,9 +127,9 @@ p = 1*bar
 timestep = 0.002*picoseconds
 
 # First we create the system, context, simulation objects
-#system = prmtop.createSystem(nonbondedMethod=PME, nonbondedCutoff=1*nanometer, constraints=HBonds)
-#system.addForce(MonteCarloBarostat(p, T))
-system = prmtop.createSystem(implicitSolvent=OBC2, soluteDielectric=1.0, solventDielectric=80.0, nonbondedMethod=CutoffNonPeriodic, nonbondedCutoff=1.2*nanometer, constraints=HBonds, implicitSolventSaltConc=0.15*moles/liter)
+system = prmtop.createSystem(nonbondedMethod=PME, nonbondedCutoff=1*nanometer, constraints=HBonds)
+system.addForce(MonteCarloBarostat(p, T))
+#system = prmtop.createSystem(implicitSolvent=OBC2, soluteDielectric=1.0, solventDielectric=80.0, nonbondedMethod=CutoffNonPeriodic, nonbondedCutoff=1.2*nanometer, constraints=HBonds, implicitSolventSaltConc=0.15*moles/liter)
 
 integrator = LangevinIntegrator(T, 1/picosecond, timestep)
 
@@ -137,7 +143,7 @@ if inpcrd.boxVectors is not None:
 ##before any other forces and keep it throughout.
 
 if (args.RestrainedCoMAtomsIn is not None):
-    FlexList  = open(args.RestrainedAtomsIn) 
+	FlexList  = open(args.RestrainedCoMAtomsIn) 
 	LoopAtoms = FlexList.read().split("\n") 
 	LoopAtoms = [x for x in LoopAtoms if x]  ##Remove empty elements 
 
@@ -145,9 +151,9 @@ if (args.RestrainedCoMAtomsIn is not None):
 		LoopAtoms[RestraintIx] = LoopAtoms[RestraintIx].split()   ##Split into n groups
 		LoopAtoms[RestraintIx] = [int(x) for x in LoopAtoms[RestraintIx] if x]  ##Turn to ints
     
-    system.addForce(GenerateCoMRestraint(LoopAtoms[0], LoopAtoms[1]))
-    print ("Centers of Mass have been restrained!")
-    
+	system.addForce(GenerateCoMRestraint(LoopAtoms[0], LoopAtoms[1]))
+	print ("Centers of Mass have been restrained!")
+
 
 # We iterate through all the sets of restraints, creating a list
 # of all the index groups
@@ -197,17 +203,17 @@ if (args.RestrainedAtomsIn is not None):
 
 ##And at last we do a global minimization, or if no
 ##restrained atoms were specified, we do this from the start
+if (args.NoGlobal is False):
 
-CurrentPositions = simulation.context.getState(getPositions=True).getPositions()
-simulation.context.reinitialize(preserveState=True)
-
-simulation.minimizeEnergy()
-
-TotalPotEnergy = simulation.context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(kilocalories_per_mole)
-print ("After global minimization, the energy is {} kcal/mole".format(TotalPotEnergy))
+	simulation.context.reinitialize(preserveState=True)
+		
+	simulation.minimizeEnergy()
+		
+	TotalPotEnergy = simulation.context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(kilocalories_per_mole)
+	print ("After global minimization, the energy is {} kcal/mole".format(TotalPotEnergy))
 
 SaveState = simulation.context.getState(getPositions=True)
-pdbWrite = pdbreporter.PDBReporter("{}_Global_min.pdb".format(args.OutputRoot), reportInterval=0)
+pdbWrite = pdbreporter.PDBReporter("{}_PostMin.pdb".format(args.OutputRoot), reportInterval=0)
 pdbWrite.report(simulation, SaveState)
 
 simulation.saveState("{}_FinalMinimization.xml".format(args.OutputRoot))
