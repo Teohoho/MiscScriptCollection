@@ -1,0 +1,3 @@
+A set of scripts that use OpenMM to run biased Molecular Dynamics simulations. At present, harmonic positional restraints and flat-bottom restraints between groups of atoms have been implemented. 
+
+In future, I plan to write an interface that generates the restraint files, using MDTraj, so the user won't have to use outside tools (such as VMD) to generate these files.
