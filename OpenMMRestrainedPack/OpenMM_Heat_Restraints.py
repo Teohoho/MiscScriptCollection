@@ -16,7 +16,7 @@ parser.add_argument("--NoGlobal", action="store_true", help="After the restraint
 args = parser.parse_args()
 
 if (args.RestrainedAtomsIn is None) and (args.NoGlobal is True):
-	print ("No restraints have been supplied and NoGlobal option was used. Exitting…")
+	print ("No restraints have been supplied and NoGlobal option was used. Exitting...")
 	sys.exit()
 
 def GenerateCoMRestraint(Group1, Group2):
@@ -180,19 +180,14 @@ for RestraintIx in range(len(LoopAtoms)):
 
 print ("There are {} restraint profiles:".format(len(LoopAtoms)))
 for RestraintIx in range(len(LoopAtoms)):
-	print ("\t· Restraint Set {}: {} atoms restrained out of a total of {} atoms.".format(RestraintIx, len(LoopAtoms[RestraintIx]),system.getNumParticles()))
+	print ("\t * Restraint Set {}: {} atoms restrained out of a total of {} atoms.".format(RestraintIx, len(LoopAtoms[RestraintIx]),system.getNumParticles()))
 
 ##Heat
 ##We have to heat the system while iterating through all the constraints set.
 
 ##We add reporters
-
 for RestraintIx in range(len(LoopAtoms)):
-## We need to remove the old restraint, if it exists.
-## It corresponds to the last force object
-
 	simulation.reporters = []
-	
 	simulation.reporters.append(StateDataReporter("{}_HeatingRestraintProfile{}.out".format(args.OutputRoot, RestraintIx), 1000, step=True,
 											potentialEnergy=True, kineticEnergy=True, totalEnergy=True, temperature=True,
 											density=True, separator="\t"))
@@ -209,18 +204,17 @@ for RestraintIx in range(len(LoopAtoms)):
 
 ##Heating, for 1ns, just to be safe.
 	for T in range(5,300,10):
-		print ("Heating to {}K…".format(T))
+		print ("Heating to {}K...".format(T))
 		integrator.setTemperature(T)
 		simulation.step(35000)
 ##Equilibrating, for 0.75 ns
-	print ("Equilibrating…")
+	print ("Equilibrating...")
 	simulation.step(750000)
 
 ##Remove Restraint
 	system.removeForce(system.getNumForces()-1)
 
 ##Global heating & Eq
-
 if (args.NoGlobal is False):
 	simulation.context.reinitialize(preserveState=True)
 	
