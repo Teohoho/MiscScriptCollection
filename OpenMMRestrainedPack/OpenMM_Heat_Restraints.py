@@ -16,6 +16,15 @@ parser.add_argument("--RestrainedCoMAtomsIn", type=str, help="A file containing 
 parser.add_argument("--NoGlobal", action="store_true", help="After the restraint profile has been used, DON'T do a global minimization")
 args = parser.parse_args()
 
+##Check OpenMM version, since the preserveState attribute of the 
+##reinitialize method of the context object has been introduced
+##in OpenMM 7.2.0. If an earlier version is used, print an 
+##adequate message and exit
+
+if (version.short_version <= "7.2"):
+	print ("Your version of OpenMM ({}) doesn't have the latest form of the 'reinitializeContext' method.
+				Please update to versions higher than 7.2".format(version.short_version))
+
 if (args.RestrainedAtomsIn is None) and (args.NoGlobal is True):
 	print ("No restraints have been supplied and NoGlobal option was used. Exitting...")
 	sys.exit()
