@@ -16,8 +16,8 @@ parser.add_argument("--RestrainedCoMAtomsIn", type=str, help="A file containing 
 args = parser.parse_args()
 
 if (version.short_version <= "7.2"):
-	print ("Your version of OpenMM ({}) doesn't have the latest form of the 'reinitializeContext' method.
-				Please update to versions higher than 7.2".format(version.short_version))
+	print ("Your version of OpenMM ({}) doesn't have the latest form of the 'reinitializeContext' method." \
+"Please update to versions higher than 7.2".format(version.short_version))
 
 if (args.OutputRoot is None):
 	args.OutputRoot = files.split("/")[-1]

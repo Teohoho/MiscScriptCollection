@@ -22,8 +22,8 @@ args = parser.parse_args()
 ##adequate message and exit
 
 if (version.short_version <= "7.2"):
-	print ("Your version of OpenMM ({}) doesn't have the latest form of the 'reinitializeContext' method.
-				Please update to versions higher than 7.2".format(version.short_version))
+	print ("Your version of OpenMM ({}) doesn't have the latest form of the 'reinitializeContext' method." \
+"Please update to versions higher than 7.2".format(version.short_version))
 
 if (args.RestrainedAtomsIn is None) and (args.NoGlobal is True):
 	print ("No restraints have been supplied and NoGlobal option was used. Exitting...")
