@@ -30,7 +30,7 @@ if (args.RestrainedAtomsIn is None) and (args.NoGlobal is True):
 	sys.exit()
 
 if (args.OutputRoot is None):
-	args.OutputRoot = files.split("/")[-1]
+	args.OutputRoot = args.files.split("/")[-1]
 
 def GenerateCoMRestraint(Group1, Group2):
 

@@ -20,7 +20,7 @@ if (version.short_version <= "7.2"):
 "Please update to versions higher than 7.2".format(version.short_version))
 
 if (args.OutputRoot is None):
-	args.OutputRoot = files.split("/")[-1]
+	args.OutputRoot = args.files.split("/")[-1]
 
 def GenerateCoMRestraint(Group1, Group2):
 
