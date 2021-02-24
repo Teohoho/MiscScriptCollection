@@ -13,12 +13,18 @@ parser.add_argument("--OutputRoot", type=str, help="A string to be appended to t
 parser.add_argument("--LoadState", type=str, help="XML file from previous simulation. Optional")
 parser.add_argument("--RestrainedAtomsIn", type=str, help="A file containing the indices of the atoms to be restrained. The restraints that make up the restraint profile must be separated by a newline character.")
 parser.add_argument("--RestrainedCoMAtomsIn", type=str, help="A file containing the lists of atoms which make up the two groups that will have their Centers of Mass restrained. The two groups have to be separated by a newline character.")
+parser.add_argument("--NoFree", action="store_true", help="After Harmonic restraints profile have been run, stop. Don't do unrestrained/CoM-only MD.")
 args = parser.parse_args()
 
 if (version.short_version <= "7.2"):
 	print ("Your version of OpenMM ({}) doesn't have the latest form of the 'reinitializeContext' method." \
 "Please update to versions higher than 7.2".format(version.short_version))
 
+if (args.RestrainedAtomsIn is None) and (args.NoFree is True):
+   print ("No restraints have been supplied and NoFree option was used. Exitting...")
+   sys.exit()
+	
+	
 if (args.OutputRoot is None):
 	args.OutputRoot = args.files.split("/")[-1]
 
@@ -195,7 +201,7 @@ if (args.RestrainedAtomsIn is not None):
 												potentialEnergy=True, kineticEnergy=True, totalEnergy=True, temperature=True,
 												density=True, separator="\t"))
 		simulation.reporters.append(DCDReporter("{}_ProductionRestraintProfile{}.dcd".format(args.OutputRoot, RestraintIx), 6000)) ##200 frames/restraint profile
-		simulation.reporters.append(CheckpointReporter("{}_Prod_01.chk".format(args.OutputRoot), rstFreq))
+		simulation.reporters.append(CheckpointReporter("{}_Prod_01_Restraint{}.chk".format(args.OutputRoot,RestraintIx), rstFreq))
 	
 		CurrentPositions = simulation.context.getState(getPositions=True).getPositions()
 		AtomIndices = LoopAtoms[RestraintIx]
@@ -220,24 +226,26 @@ if (args.RestrainedAtomsIn is not None):
 
 ##	CoM-ONLY PRODUCTION ##
 
-nofSteps = 250000000 #(500 ns)
-dcdFreq  = 25000 #(10000 frames) 
-outFreq  = 500 #(500000 lines)
-rst1Freq  = 500000
-rst2Freq  = 750000
-print("Production run for " + str(nofSteps * timestep))
-print("Simulation started at " + str(datetime.datetime.now()))
+if(args.NoFree is False):
+	nofSteps = 250000000 #(500 ns)
+	dcdFreq  = 25000 #(10000 frames) 
+	outFreq  = 500 #(500000 lines)
+	rst1Freq  = 500000
+	rst2Freq  = 750000
+	print("Production run for " + str(nofSteps * timestep))
+	print("Simulation started at " + str(datetime.datetime.now()))
 
-simulation.reporters.append(StateDataReporter("{}_Prod.out".format(args.OutputRoot), outFreq, step=True,
-                              potentialEnergy=True, kineticEnergy=True, totalEnergy=True, temperature=True,
-                              density=True, totalSteps=nofSteps, remainingTime=True, speed=True, progress=True, separator="\t"))
-simulation.reporters.append(DCDReporter("{}_Prod.dcd".format(args.OutputRoot), dcdFreq)) 
-simulation.reporters.append(CheckpointReporter("{}_Prod_01.chk".format(args.OutputRoot), rst1Freq))
-simulation.reporters.append(CheckpointReporter("{}_Prod_02.chk".format(args.OutputRoot), rst2Freq))
+	simulation.reporters = []
+	simulation.reporters.append(StateDataReporter("{}_Prod.out".format(args.OutputRoot), outFreq, step=True,
+	                              potentialEnergy=True, kineticEnergy=True, totalEnergy=True, temperature=True,
+	                              density=True, totalSteps=nofSteps, remainingTime=True, speed=True, progress=True, separator="\t"))
+	simulation.reporters.append(DCDReporter("{}_Prod.dcd".format(args.OutputRoot), dcdFreq)) 
+	simulation.reporters.append(CheckpointReporter("{}_Prod_01.chk".format(args.OutputRoot), rst1Freq))
+	simulation.reporters.append(CheckpointReporter("{}_Prod_02.chk".format(args.OutputRoot), rst2Freq))
 
-simulation.step(nofSteps)
-simulation.saveState(args.OutputRoot + 'Final.xml') #We save it, since we may want to continue this simulation.
-simulation.saveCheckpoint(args.OutputRoot + "Final.chk") #We also save a checkpoint, if we want to continue this simulation later.
-print("Done at " + str(datetime.datetime.now()))
+	simulation.step(nofSteps)
+	simulation.saveState(args.OutputRoot + 'Final.xml') #We save it, since we may want to continue this simulation.
+	simulation.saveCheckpoint(args.OutputRoot + "Final.chk") #We also save a checkpoint, if we want to continue this simulation later.
+	print("Done at " + str(datetime.datetime.now()))
 
 ## END CoM-ONLY PRODUCTION ##
