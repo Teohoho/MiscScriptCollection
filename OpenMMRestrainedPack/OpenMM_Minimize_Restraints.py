@@ -151,6 +151,8 @@ simulation.context.setPositions(inpcrd.positions) #We set the positions of the p
 if inpcrd.boxVectors is not None:
 	simulation.context.setPeriodicBoxVectors(*inpcrd.boxVectors)
 
+TotalPotEnergy = simulation.context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(kilocalories_per_mole)
+print ("Before any minimization is done, the energy is {} kcal/mole".format(TotalPotEnergy))
 ##We assume you want to keep the centers of mass restrained through
 ##the whole minimization process, so we initialize that force
 ##before any other forces and keep it throughout.
@@ -186,10 +188,6 @@ if (args.RestrainedAtomsIn is not None):
 
 	##Minimize
 	##We have to minimize while iterating through all the constraints set.
-
-	TotalPotEnergy = simulation.context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(kilocalories_per_mole)
-	print ("Before any minimization is done, the energy is {} kcal/mole".format(TotalPotEnergy))
-
 	for RestraintIx in range(len(LoopAtoms)):
 
 		CurrentPositions = simulation.context.getState(getPositions=True).getPositions()
