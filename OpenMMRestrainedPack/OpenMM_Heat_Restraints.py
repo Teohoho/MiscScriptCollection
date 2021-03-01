@@ -136,7 +136,7 @@ timestep = 0.002*picoseconds
 
 # First we create the system, context, simulation objects
 if (args.Solvent.lower() == "explicit"):
-	system = prmtop.createSystem(nonbondedMethod=PME, nonbondedCutoff=1*nanometer, constraints=HBonds)
+	system = prmtop.createSystem(nonbondedMethod=PME, nonbondedCutoff=1.2*nanometer, constraints=HBonds)
 	system.addForce(MonteCarloBarostat(p, T))
 elif (args.Solvent.lower() == "implicit"):
 	system = prmtop.createSystem(implicitSolvent=OBC2, soluteDielectric=1.0, solventDielectric=80.0, nonbondedMethod=CutoffNonPeriodic, nonbondedCutoff=1.2*nanometer, constraints=HBonds, implicitSolventSaltConc=0.15*moles/liter)
@@ -185,50 +185,51 @@ system.removeForce(system.getNumForces()-1)
 # We iterate through all the sets of restraints, creating a list
 # of all the index groups
 
-FlexList  = open(args.RestrainedAtomsIn) 
-LoopAtoms = FlexList.read().split("\n") 
-LoopAtoms = [x for x in LoopAtoms if x]  ##Remove empty elements 
-
-for RestraintIx in range(len(LoopAtoms)):
-	LoopAtoms[RestraintIx] = LoopAtoms[RestraintIx].split()   ##Split into n groups
-	LoopAtoms[RestraintIx] = [int(x) for x in LoopAtoms[RestraintIx] if x]  ##Turn to ints
-
-
-print ("There are {} restraint profiles:".format(len(LoopAtoms)))
-for RestraintIx in range(len(LoopAtoms)):
-	print ("\t * Restraint Set {}: {} atoms restrained out of a total of {} atoms.".format(RestraintIx, len(LoopAtoms[RestraintIx]),system.getNumParticles()))
-
-##Heat
-##We have to heat the system while iterating through all the constraints set.
-
-##We add reporters
-for RestraintIx in range(len(LoopAtoms)):
-	simulation.reporters = []
-	simulation.reporters.append(StateDataReporter("{}_HeatingRestraintProfile{}.out".format(args.OutputRoot, RestraintIx), 1000, step=True,
-											potentialEnergy=True, kineticEnergy=True, totalEnergy=True, temperature=True,
-											density=True, separator="\t"))
-	simulation.reporters.append(DCDReporter("{}_HeatingRestraintProfile{}.dcd".format(args.OutputRoot, RestraintIx), 6000)) ##200 frames/restraint profile
-
-	CurrentPositions = simulation.context.getState(getPositions=True).getPositions()
-	AtomIndices = LoopAtoms[RestraintIx]
-
-##Add Restraint
-	CurrentRestraint = GenerateRestraint(CurrentPositions, AtomIndices)
-
-	system.addForce(CurrentRestraint)	
-	simulation.context.reinitialize(preserveState=True)
-
-##Heating, for 1ns, just to be safe.
-	for T in range(5,300,10):
-		print ("Heating to {}K...".format(T))
-		integrator.setTemperature(T)
-		simulation.step(35000)
-##Equilibrating, for 0.75 ns
-	print ("Equilibrating...")
-	simulation.step(750000)
-
-##Remove Restraint
-	system.removeForce(system.getNumForces()-1)
+if (args.RestrainedAtomsIn is not None):
+	FlexList  = open(args.RestrainedAtomsIn) 
+	LoopAtoms = FlexList.read().split("\n") 
+	LoopAtoms = [x for x in LoopAtoms if x]  ##Remove empty elements 
+	
+	for RestraintIx in range(len(LoopAtoms)):
+		LoopAtoms[RestraintIx] = LoopAtoms[RestraintIx].split()   ##Split into n groups
+		LoopAtoms[RestraintIx] = [int(x) for x in LoopAtoms[RestraintIx] if x]  ##Turn to ints
+	
+	
+	print ("There are {} restraint profiles:".format(len(LoopAtoms)))
+	for RestraintIx in range(len(LoopAtoms)):
+		print ("\t * Restraint Set {}: {} atoms restrained out of a total of {} atoms.".format(RestraintIx, len(LoopAtoms[RestraintIx]),system.getNumParticles()))
+	
+	##Heat
+	##We have to heat the system while iterating through all the constraints set.
+	
+	##We add reporters
+	for RestraintIx in range(len(LoopAtoms)):
+		simulation.reporters = []
+		simulation.reporters.append(StateDataReporter("{}_HeatingRestraintProfile{}.out".format(args.OutputRoot, RestraintIx), 1000, step=True,
+												potentialEnergy=True, kineticEnergy=True, totalEnergy=True, temperature=True,
+												density=True, separator="\t"))
+		simulation.reporters.append(DCDReporter("{}_HeatingRestraintProfile{}.dcd".format(args.OutputRoot, RestraintIx), 6000)) ##200 frames/restraint profile
+	
+		CurrentPositions = simulation.context.getState(getPositions=True).getPositions()
+		AtomIndices = LoopAtoms[RestraintIx]
+	
+	##Add Restraint
+		CurrentRestraint = GenerateRestraint(CurrentPositions, AtomIndices)
+	
+		system.addForce(CurrentRestraint)	
+		simulation.context.reinitialize(preserveState=True)
+	
+	##Heating, for ~1ns, just to be safe.
+		for T in range(5,300,10):
+			print ("Heating to {}K...".format(T))
+			integrator.setTemperature(T)
+			simulation.step(17000)
+	##Equilibrating, for 0.75 ns
+		print ("Equilibrating...")
+		simulation.step(375000)
+	
+	##Remove Restraint
+		system.removeForce(system.getNumForces()-1)
 
 ##Global heating & Eq
 if (args.NoGlobal is False):
@@ -242,11 +243,11 @@ if (args.NoGlobal is False):
 	
 	
 	for T in range(5,300,5):
-		print ("Heating globally to {}K…".format(T))
+		print ("Heating globally to {}K...".format(T))
 		integrator.setTemperature(T)
 		simulation.step(20000)
 	
-	print ("Equilibrating globally…")
+	print ("Equilibrating globally...")
 	simulation.step(600000)
 
 ##Save Coords

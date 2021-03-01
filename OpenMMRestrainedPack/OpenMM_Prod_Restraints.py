@@ -127,7 +127,7 @@ timestep = 0.002*picoseconds
 
 # First we create the system, context, simulation objects
 if (args.Solvent.lower() == "explicit"):
-	system = prmtop.createSystem(nonbondedMethod=PME, nonbondedCutoff=1*nanometer, constraints=HBonds)
+	system = prmtop.createSystem(nonbondedMethod=PME, nonbondedCutoff=1.2*nanometer, constraints=HBonds)
 	system.addForce(MonteCarloBarostat(p, T))
 elif (args.Solvent.lower() == "implicit"):
 	system = prmtop.createSystem(implicitSolvent=OBC2, soluteDielectric=1.0, solventDielectric=80.0, nonbondedMethod=CutoffNonPeriodic, nonbondedCutoff=1.2*nanometer, constraints=HBonds, implicitSolventSaltConc=0.15*moles/liter)
