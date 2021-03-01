@@ -127,7 +127,6 @@ ScoreFileOut.write("{}\t{}\t{}\t{}\n".format("Frame", "Contact ", "SASA Score", 
 
 ##Print actual data
 for FrameIx in range(MDTrajTrajectoryObject.n_frames):
-    #ScoreFileOut.write("{:>6}\t{:>7}\t{:>15.6}\t{:>17}\n".format(FrameIx, ContactScore[FrameIx], SASAScore[FrameIx], scipy.stats.percentileofscore(SASAScore,SASAScore[FrameIx])))
-    ScoreFileOut.write("{}\t{:>3}\t\t{:.6}\t\t\t{}\n".format(FrameIx, ContactScore[FrameIx], SASAScore[FrameIx], scipy.stats.percentileofscore(SASAScore,SASAScore[FrameIx])))
+    ScoreFileOut.write("{}\t{:>3}\t\t{:.6}\t\t\t{:.6}\n".format(FrameIx, ContactScore[FrameIx], SASAScore[FrameIx], scipy.stats.percentileofscore(SASAScore,SASAScore[FrameIx])))
 
 ScoreFileOut.close()
