@@ -236,10 +236,10 @@ if (args.NoGlobal is False):
 	simulation.context.reinitialize(preserveState=True)
 	
 	simulation.reporters = []
-	simulation.reporters.append(StateDataReporter("{}_HeatingGlobal.out".format(args.OutputRoot, RestraintIx), 1000, step=True,
+	simulation.reporters.append(StateDataReporter("{}_HeatingGlobal.out".format(args.OutputRoot), 1000, step=True,
 											potentialEnergy=True, kineticEnergy=True, totalEnergy=True, temperature=True,
 											density=True, separator="\t"))
-	simulation.reporters.append(DCDReporter("{}_HeatingGlobal.dcd".format(args.OutputRoot, RestraintIx), 6000)) 
+	simulation.reporters.append(DCDReporter("{}_HeatingGlobal.dcd".format(args.OutputRoot), 6000)) 
 	
 	
 	for T in range(5,300,5):
