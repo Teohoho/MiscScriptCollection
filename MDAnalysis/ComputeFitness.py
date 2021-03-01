@@ -1,5 +1,6 @@
 import mdtraj as md
 import numpy as np
+import sys
 import scipy.stats
 
 import datetime
@@ -17,13 +18,18 @@ args = parser.parse_args()
 
 ## Load Trajectory
 MDTrajTrajectoryObject = md.load(args.TrajIn, top=args.TopIn)
-MDTrajTrajectoryObject = MDTrajTrajectoryObject[0:50]
 print ("Trajectory loaded: {} frames".format(MDTrajTrajectoryObject.n_frames))
 
 ## Define Ligand and Receptor selections, in DSL selection language
 
 LigandSele = MDTrajTrajectoryObject.topology.select(args.LigandSele)
 ReceptorSele = MDTrajTrajectoryObject.topology.select(args.ReceptorSele)
+
+## Do a check to see the selections have no intersection
+
+if (len(np.intersect1d(LigandSele,ReceptorSele)) != 0):
+	print ("The selections for ligand and receptor have {} common elements. Please remake selections.")
+	sys.exit()
 
 ###################
 ## CONTACT SCORE ##
