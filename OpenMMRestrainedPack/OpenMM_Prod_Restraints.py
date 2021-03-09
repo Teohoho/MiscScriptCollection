@@ -97,7 +97,7 @@ def GenerateRestraint(Positions, Indices):
 
 	"""
 
-	CustomHarmonicForce = CustomExternalForce("springConstant*((x-x0)^2+(y-y0)^2+(z-z0)^2)")     #Keep periodicity in mind?
+	CustomHarmonicForce = CustomExternalForce("springConstant*(periodicdistance(x, y, z, x0, y0, z0)^2)")
 	CustomHarmonicForce.addGlobalParameter("springConstant", (10)*kilocalories_per_mole/nanometer**2)
 	CustomHarmonicForce.addPerParticleParameter("x0")
 	CustomHarmonicForce.addPerParticleParameter("y0")
