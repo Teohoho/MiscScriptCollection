@@ -176,10 +176,11 @@ if (args.RestrainedAtomsIn is not None):
 # of all the index groups
 
 
-	nofSteps = 25000000 #(50 ns) 
-	dcdFreq  = 25000 #(1000 frames) 
-	outFreq  = 500 #(50000 lines)
-	rstFreq  = 10000
+	nofSteps = 250000000 #(500 ns) 
+	dcdFreq  = 25000 #(10000 frames) 
+	outFreq  = 500 #(500000 lines)
+	rst1Freq  = 10000
+	rst2Freq  = 25000
 	
 	FlexList  = open(args.RestrainedAtomsIn) 
 	LoopAtoms = FlexList.read().split("\n") 
@@ -197,11 +198,12 @@ if (args.RestrainedAtomsIn is not None):
 	##We add reporters
 	for RestraintIx in range(len(LoopAtoms)):
 		simulation.reporters = []
-		simulation.reporters.append(StateDataReporter("{}_ProductionRestraintProfile{}.out".format(args.OutputRoot, RestraintIx), 1000, step=True,
-												potentialEnergy=True, kineticEnergy=True, totalEnergy=True, temperature=True,
-												density=True, separator="\t"))
-		simulation.reporters.append(DCDReporter("{}_ProductionRestraintProfile{}.dcd".format(args.OutputRoot, RestraintIx), 6000)) ##200 frames/restraint profile
-		simulation.reporters.append(CheckpointReporter("{}_Prod_01_Restraint{}.chk".format(args.OutputRoot,RestraintIx), rstFreq))
+		simulation.reporters.append(StateDataReporter("{}_Prod_Restraint{}.out".format(args.OutputRoot, RestraintIx), outFreq, step=True,
+	                              potentialEnergy=True, kineticEnergy=True, totalEnergy=True, temperature=True,
+	                              density=True, totalSteps=nofSteps, remainingTime=True, speed=True, progress=True, separator="\t"))
+		simulation.reporters.append(DCDReporter("{}_Prod_Restraint{}.dcd".format(args.OutputRoot, RestraintIx), dcdFreq)) 
+		simulation.reporters.append(CheckpointReporter("{}_Prod_01_{}.chk".format(args.OutputRoot,RestraintIx), rst1Freq))
+		simulation.reporters.append(CheckpointReporter("{}_Prod_02_{}.chk".format(args.OutputRoot,RestraintIx), rst2Freq))
 	
 		CurrentPositions = simulation.context.getState(getPositions=True).getPositions()
 		AtomIndices = LoopAtoms[RestraintIx]
