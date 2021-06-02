@@ -106,25 +106,24 @@ class GenerateRestraint:
         ## Define the equation for the Harmonic Force
 		#CustomHarmonicForce = CustomExternalForce("springConstant * (periodicdistance(x, y, z, x0, y0, z0)^2)")
 		CustomHarmonicForce = CustomExternalForce("springConstant*((x-x0)^2+(y-y0)^2+(z-z0)^2)")
-		CustomHarmonicForce.addGlobalParameter("springConstant", K*kilocalories_per_mole/nanometer**2)
 		CustomHarmonicForce.addPerParticleParameter("x0")
 		CustomHarmonicForce.addPerParticleParameter("y0")
 		CustomHarmonicForce.addPerParticleParameter("z0")
+		CustomHarmonicForce.addPerParticleParameter("springConstant")
 
 		if (dummy==False):
 		## Get positions from the OpenMMSim
 			Positions = OpenMMSim.context.getState(getPositions=True, enforcePeriodicBox=Periodic).getPositions()
 			#Positions = OpenMMSim.context.getState(getPositions=True, enforcePeriodicBox=True).getPositions()
-			print(Positions[0])    
-			print(ParticleIx[0])
-    			## Iterate through the given ParticleIx and add the
-            ## proper atoms to the force object
+    		## Iterate through the given ParticleIx and add the
+         ## proper atoms to the force object
 			for PartIx in ParticleIx:
 				PartX = Positions[PartIx][0].value_in_unit(nanometer)
 				PartY = Positions[PartIx][1].value_in_unit(nanometer)
 				PartZ = Positions[PartIx][2].value_in_unit(nanometer)
-                
-				CustomHarmonicForce.addParticle(PartIx, [PartX, PartY, PartZ])
+				spring = K*kilocalories_per_mole/nanometer**2               
+ 
+				CustomHarmonicForce.addParticle(PartIx, [PartX, PartY, PartZ, spring])
     
 		##DEBUG##
 		
