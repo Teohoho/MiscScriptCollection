@@ -109,7 +109,7 @@ class GenerateRestraint:
 		CustomHarmonicForce.addPerParticleParameter("x0")
 		CustomHarmonicForce.addPerParticleParameter("y0")
 		CustomHarmonicForce.addPerParticleParameter("z0")
-		CustomHarmonicForce.addPerParticleParameter("springConstant")
+		CustomHarmonicForce.addGlobalParameter("springConstant")
 
 		if (dummy==False):
 		## Get positions from the OpenMMSim
